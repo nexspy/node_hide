@@ -1,0 +1,221 @@
+<?php
+
+use Drupal\Core\Entity;
+// use Drupal\node_hide\NodeHide;
+
+/**
+ * Implements hook_theme()
+ */
+function node_hide_theme()
+{
+    return [
+        'nodehide_node' => [
+            'template' => 'nodehide_node',
+            'variables' => [
+                'node' => NULL,
+            ],
+        ],
+    ];
+}
+
+/**
+ * Implements hook_entity_load()
+ */
+function node_hide_entity_load(array $entities, $entity_type_id)
+{
+    foreach ($entities as $key => $entity) {
+        // entity must be node
+        if ($entity_type_id != 'node') continue;
+
+        // only block content for view route
+        if (node_hide_check_path_must_be_node_view() === false) continue;
+
+        // check entity type
+        $node_hide_service = \Drupal::service('node_hide.node_hide');
+        $isContentHidden = $node_hide_service->is_content_hidden($entity);
+
+        if (!$isContentHidden) continue;
+
+        // hide content (fields) of this entity
+        node_hide_hide_content($entity);
+    }
+}
+
+/**
+ * Check : if current page is node view
+ */
+function node_hide_check_path_must_be_node_view()
+{
+    // check for node pages
+    $server_uri = $_SERVER['REQUEST_URI'];
+    $break = explode('node/', $server_uri);
+
+    // check for other pages, node pages give null in return
+    $current_path = \Drupal::routeMatch()->getRouteName();
+    
+    // non-node pages should not work
+    if ($current_path !== null) return true;
+    
+    if (count($break) <= 1) return false;
+
+    $break_node = explode('/', $break[1]);
+
+    return (count($break_node) == 1);
+}
+
+/**
+ * Hide the content of the entity (node)
+ */
+function node_hide_hide_content($entity)
+{
+    $content_type = $entity->getType();
+    $applicable_content_types = ['article'];
+    $isContentHidden = (in_array($content_type, $applicable_content_types));
+
+    // must be content type this module support
+    if (!$isContentHidden) return false;
+
+    $fields = node_hide_get_fields($entity);
+    $empty_value = '';
+    foreach ($fields as $field) {
+        \Drupal\Core\Field\FieldItemList::class;
+        $field_name = $field->getName();
+        if ($field_name == 'title') {
+            $empty_value = 'Access Denied';
+        }
+        $entity->set($field_name, $empty_value);
+    }
+
+    return true;
+}
+
+/**
+ * Get : fields of entity
+ *
+ * @param Entity $entity
+ * @return array
+ */
+function node_hide_get_fields($entity)
+{
+    $fields_list = $entity->getFields();
+    $special_fields = ['title', 'body'];
+    $list = [];
+    foreach ($fields_list as $field_name => $field_definition) {
+        $isEntityField = (strpos($field_name, 'field_') !== false || in_array($field_name, $special_fields));
+
+        if (!$isEntityField) continue;
+
+        $list[] = $field_definition;
+    }
+    return $list;
+}
+
+/**
+ * Implements hook_preprocess_page()
+ */
+function node_hide_preprocess_page(&$variables)
+{
+    $node = \Drupal::routeMatch()->getParameter('node');
+
+    if ($node && is_object($node)) {
+        $node_hide_service = \Drupal::service('node_hide.node_hide');
+        $applicable_content_types = $node_hide_service->get_content_types();
+        $isContentHidden = $node_hide_service->is_content_hidden($node);
+        $hide_content_region = $node_hide_service->get_hide_content_region();
+        $is_node_view_page = true;
+
+        if ($isContentHidden) {
+            $settings = [
+                'show' => $is_node_view_page,
+                'types' => $applicable_content_types,
+                'content_hide' => $hide_content_region,
+            ];
+
+            if ($hide_content_region) {
+                unset($variables['page']['content']);
+            }
+
+            $variables['#attached']['library'][] =  'node_hide/node_hide.base';
+            $variables['#attached']['drupalSettings']['node_hide']['popup'] = $settings;
+        }
+    }
+}
+
+/**
+ * Implements hook_form_alter()
+ */
+function node_hide_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id)
+{
+    $node_hide_service = \Drupal::service('node_hide.node_hide');
+    $content_types = $node_hide_service->get_content_types();
+
+    // only for node edit form
+    if (strpos($form_id, '_edit_form') !== false) {
+        $form_id_name_pre = "node_";
+        $form_id_name_post = "_edit_form";
+
+        $forms_supported = [];
+        foreach ($content_types as $content_type) {
+            $forms_supported[] = $form_id_name_pre . $content_type . $form_id_name_post;
+        }
+
+        if (in_array($form_id, $forms_supported)) {
+            $nid = $form_state->getBuildInfo()['callback_object']->getEntity()->get('nid')->value;
+            $key = $node_hide_service->get_key($nid);
+
+            $current_user = \Drupal::currentUser();
+            $roles = $current_user->getRoles();
+            if (in_array('administrator', $roles)) {
+                $form['store_key'] = [
+                    '#type' => 'textfield',
+                    '#default_value' => $key,
+                    '#title' => 'Secret Key',
+                    '#required' => false,
+                ];
+
+                $form['actions']['submit']['#submit'][] = 'node_hide_node_edit_submit';
+            }
+        }
+    }
+    
+}
+
+function node_hide_get_key($nid)
+{
+    $database = \Drupal::database();
+    $query = $database->select('node_hide', 'ic');
+    $query->fields('ic');
+    $query->condition('entity_id', $nid);
+    $result = $query->execute();
+
+    $key = '';
+    foreach ($result as $record) {
+        $key = $record->key;
+    }
+
+    return $key;
+}
+
+/**
+ * Submit : save/update key
+ */
+function node_hide_node_edit_submit(&$form, \Drupal\Core\Form\FormStateInterface $form_state)
+{
+    // save or update the key value
+    $values = $form_state->getValues();
+    $key = $values['store_key'];
+    $nid = 1990;
+
+    // save code the key value
+    $connection = \Drupal::database();
+    $result = $connection->insert('node_hide')
+        ->fields([
+            'key' => $key,
+            'entity_id' => $nid,
+            'entity_type' => 'node',
+            'expiry_date' => '1231231221321',
+        ])
+        ->execute();
+
+    \Drupal::messenger()->addMessage($key);
+}

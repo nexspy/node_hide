@@ -1,0 +1,46 @@
+<?php
+
+/**
+ * Implements hook_schema()
+ */
+function node_hide_schema() {
+    $schema['node_hide'] = [
+        'description' => 'Stores access keys for contents',
+        'fields' => [
+            'id' => [
+              'type' => 'serial',
+              'not null' => TRUE,
+              'description' => 'Primary Key: Unique ID.',
+            ],
+            'entity_id' => [
+              'type' => 'int',
+              'not null' => TRUE,
+              'default' => 0,
+              'description' => "Entity ID",
+            ],
+            'entity_type' => [
+                'type' => 'varchar',
+                'length' => 20,
+                'not null' => TRUE,
+                'default' => '',
+                'description' => 'Type of entity.',
+              ],
+            'key' => [
+              'type' => 'varchar',
+              'length' => 20,
+              'not null' => TRUE,
+              'default' => '',
+              'description' => 'Name of the person.',
+            ],
+            'expiry_date' => [
+                'type' => 'varchar',
+                'length' => 20,
+                'not null' => TRUE,
+                'default' => '',
+                'description' => 'Expiration date.',
+              ],
+          ],
+          'primary key' => ['id'],
+      ];
+      return $schema;
+}

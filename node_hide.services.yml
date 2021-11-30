@@ -1,0 +1,7 @@
+services:
+  node_hide.node_hide:
+    class: Drupal\node_hide\NodeHideService
+    arguments: []
+  node_hide.keys:
+    class: Drupal\node_hide\Keys
+    arguments: []

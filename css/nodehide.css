@@ -1,0 +1,91 @@
+#nodehide-box {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    background-color: rgba(0,0,0,0.2);
+    backdrop-filter: blur(10px);
+}
+
+#nodehide-box .content {
+    position: relative;
+    width: 310px;
+    top: 150px;
+    left: 40%;
+    margin: 0px;
+    padding: 30px 5px 10px;
+    background-color: white;
+}
+
+#nodehide-box .content .btn-close {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    cursor: pointer;
+}
+
+#nodehide-box .content input,
+#nodehide-box .content button {
+    display: block;
+    width: 100%;
+    text-align: center;
+}
+
+#nodehide-box .content button {
+    cursor: pointer;
+    background-color: rgb(0, 124, 255);
+    border: none;
+    color: white;
+}
+
+
+.page-node-type-nodehide-communication-page .content{
+    background: #fff;
+    height: fit-content;
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.page-node-type-nodehide-communication-page .content p{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+    color: black;
+    font-weight: 700;
+    font-size: 23px;
+    text-transform: uppercase;
+    font-family: "V AG Rounded Std";
+    margin-top: 20px;
+}
+
+.page-node-type-nodehide-communication-page .content p input{
+    width: 80%;
+    padding: 0.8rem .75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    border-radius: .25rem;
+    margin-top: 13px;
+}
+
+
+.page-node-type-nodehide-communication-page .content div {
+    margin: 35px 0px 30px 0px;
+}
+
+.page-node-type-nodehide-communication-page .content div a#btn-verify{
+    padding: 13px 29px;
+    font-size: 1.25rem;
+    border-radius: .3rem;
+    background-color: #fec84c;
+    font-weight: bold;
+    font-family: "V AG Rounded Std";
+    text-transform: uppercase;
+}

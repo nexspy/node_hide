@@ -1,0 +1,7 @@
+node_hide.base:
+  version: VERSION
+  js:
+    js/nodehide.js: {}
+  css:
+    theme:
+      css/nodehide.css: {}

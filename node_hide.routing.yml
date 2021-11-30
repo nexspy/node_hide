@@ -1,0 +1,17 @@
+# API : verify the code
+node_hide.verification:
+  path: '/api/nodehide/verify'
+  defaults:
+    _controller: '\Drupal\node_hide\Controller\NodeHideController::verifyPage'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+# Settings form of this module
+node_hide.settings:
+  path: '/admin/config/system/nnodehide'
+  defaults:
+    _form: '\Drupal\node_hide\Form\NodeHideForm'
+    _title: 'Node Hide Setting'
+  requirements:
+    _permission: 'administer site configuration'
